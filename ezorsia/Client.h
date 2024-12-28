@@ -14,10 +14,12 @@ public:
 	static void JumpCap();
 	static void FixChatPosHook();
 	static void NoPassword();
+	static void MoreHook();
 	static const int m_nIGCipherHash = 0XC65053F2;
 	static int m_nGameHeight;
 	static int m_nGameWidth;
 	static int MsgAmount;
+	static bool CustomLoginFrame;
 	static bool WindowedMode;
 	static bool RemoveLogos;
 	static int setDamageCap;
@@ -26,6 +28,7 @@ public:
 	static int setAvdCap;
 	static double setAtkOutCap;
 	static bool useTubi;
+	static bool bigLoginFrame;
 	static bool SwitchChinese;
 	static bool debug;
 	static bool noPassword;
@@ -35,4 +38,7 @@ public:
 	static unsigned char imeType;
 	static DWORD jumpCap;
 	static std::string ServerIP_AddressFromINI;
+	static int serverIP_Port;
+	static bool talkRepeat;
+	static int talkTime;
 };
