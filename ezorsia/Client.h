@@ -18,7 +18,6 @@ public:
 	static int m_nGameHeight;
 	static int m_nGameWidth;
 	static int MsgAmount;
-	static bool CustomLoginFrame;
 	static bool WindowedMode;
 	static bool RemoveLogos;
 	static int setDamageCap;
@@ -27,7 +26,6 @@ public:
 	static int setAvdCap;
 	static double setAtkOutCap;
 	static bool useTubi;
-	static bool bigLoginFrame;
 	static bool SwitchChinese;
 	static bool debug;
 	static bool noPassword;

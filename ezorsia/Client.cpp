@@ -8,7 +8,6 @@
 int Client::m_nGameHeight = 720;
 int Client::m_nGameWidth = 1280;
 int Client::MsgAmount = 26;
-bool Client::CustomLoginFrame = true;
 bool Client::WindowedMode = true;
 bool Client::RemoveLogos = true;
 int Client::setDamageCap = 199999;
@@ -17,7 +16,6 @@ int Client::setAccCap = 999;
 int Client::setAvdCap = 999;
 double Client::setAtkOutCap = 199999;
 bool Client::useTubi = false;
-bool Client::bigLoginFrame = false;
 bool Client::SwitchChinese = false;
 int Client::speedMovementCap = 140;
 bool Client::noPassword = false;
@@ -28,94 +26,28 @@ unsigned char Client::imeType = 1;
 std::string Client::ServerIP_AddressFromINI = "127.0.0.1";
 
 void Client::UpdateGameStartup() {
-	//Memory::CodeCave(cc0x0044E550, dw0x0044E550, dw0x0044E550Nops); //run from packed client //skip //sub_44E546
-	//Memory::CodeCave(cc0x0044E5BE, dw0x0044E5BE, dw0x0044E5BENops); //run from packed client //skip
 
-	//Memory::CodeCave(cc0x0044E5DB, dw0x0044E5DB, dw0x0044E5DBNops); //run from packed client //skip //sub_44E5D5 (defined function)
-	//Memory::CodeCave(cc0x0044E6AC, dw0x0044E6AC, dw0x0044E6ACNops); //run from packed client //skip
+	Memory::CodeCave(cc0x00A63FF3, dw0x00A63FF3, dw0x00A63FF3Nops); //fix start @0x00A63FF3, may be unnecessary, but dump of vanilla client showed broken code here
 
-	//Memory::CodeCave(cc0x0044E71D, dw0x0044E71D, dw0x0044E71DNops); //run from packed client //skip //sub_44E716 (defined function)
-	//Memory::CodeCave(cc0x0044E80C, dw0x0044E80C, dw0x0044E80CNops); //run from packed client //skip
+	Memory::CodeCave(ccCLoginSendCheckPasswordPacket, dwCLoginSendCheckPasswordPacket, CLoginSendCheckPasswordPacketNops); //CLogin::SendCheckPasswordPacket: At the start of the sequence of pushes that contains 0C9h, place a long jmp to further down in the method to the SystemInfo basic block.Do auth patches for encoding the correct strings(user / pw)
+	Memory::WriteByte(0x005F6B87 + 2, 0x08); //CLogin::SendCheckPasswordPacket/sub_5F6952		end 005F6C6F //??
+	Memory::WriteByte(0x005F6BA0 + 2, 0xA0); //CLogin::SendCheckPasswordPacket //?? //not sure what these edits specifically do, but hendi's client has them in place for getting rid of checks at this part
+	unsigned char CA_005F6BA4[] = { 0xFF, 0x75, 0x0C, 0x90, 0x90, 0x90, 0x90 }; //CLogin::SendCheckPasswordPacket //??
+	Memory::WriteByteArray(0x005F6BA4, CA_005F6BA4, sizeof(CA_005F6BA4)); //CLogin::SendCheckPasswordPacket //??
 
-	//Memory::CodeCave(cc0x0044E8B4, dw0x0044E8B4, dw0x0044E8B4Nops); //run from packed client //skip //sub_44E88E
-	//Memory::CodeCave(cc0x0044EA22, dw0x0044EA22, dw0x0044EA22Nops); //run from packed client //skip
+	Memory::WriteByte(0x00496633 + 1, 0x47); //kill CSecurityClient::OnPacket//ty chronicle for idea for this
 
-	//Memory::CodeCave(cc0x0044EA6F, dw0x0044EA6F, dw0x0044EA6FNops); //run from packed client //skip //sub_44EA64
-	//Memory::CodeCave(cc0x0044EBD6, dw0x0044EBD6, dw0x0044EBD6Nops); //run from packed client //skip
+	Memory::FillBytes(0x009F1C04, 0x90, 5);//run from packed client //WinMain: nop ShowStartUpWndModal	//get rid of pop-up at start of game
+	//^might not work for packed client since the window seems to be run before the edit can take place, keeping in case
+	Memory::WriteByte(0x009F242F, 0xEB); //run from packed client //WinMain: jz->jmp for ShowADBalloon code (pretty much at the end of method, above push with small number)
 
-	//Memory::CodeCave(cc0x0044ECA1, dw0x0044ECA1, dw0x0044ECA1Nops); //run from packed client //skip //sub_44EC9C
-	//Memory::CodeCave(cc0x0044ED32, dw0x0044ED32, dw0x0044ED32Nops); //run from packed client //skip
+	Memory::WriteByte(0x009F6EDC, 0xEB); //kill if statement in broken //void __thiscall CWvsApp::CreateMainWindow(CWvsApp *this)
 
-	//Memory::CodeCave(cc0x0044ED52, dw0x0044ED52, dw0x0044ED52Nops); //run from packed client //skip	//sub_44ED47
-	//Memory::CodeCave(cc0x0044EED3, dw0x0044EED3, dw0x0044EED3Nops); //run from packed client //skip
+	Memory::WriteByte(0x009F74EA + 3, resmanLoadAMNT); //replace their wz load list size with ours //void __thiscall CWvsApp::InitializeResMan(CWvsApp *this)
+	Memory::CodeCave(LoadUItwice, dwLoadUItwice, dwLoadUItwiceNOPs);//working after a check after CWvsApp::InitializeInput
 
-	//Memory::CodeCave(cc0x00494943, dw0x00494943, dw0x00494943Nops); //run from packed client //skip //sub_494931
-	//Memory::CodeCave(cc0x00494BB6, dw0x00494BB6, dw0x00494BB6Nops); //run from packed client //skip
-
-	//Memory::CodeCave(cc0x00494CA9, dw0x00494CA9, dw0x00494CA9Nops); //run from packed client //skip //sub_494CA3
-	//Memory::CodeCave(cc0x00494CF0, dw0x00494CF0, dw0x00494CF0Nops); //run from packed client //skip
-
-	//Memory::CodeCave(cc0x00494D3B, dw0x00494D3B, dw0x00494D3BNops); //long jmp //??CClientSocket::Connect=sub_494D2F-494ECE //CClientSocket::Connect: Skip IP checks by changing short jmp at beginning of the method to long jmp that goes to the client socket code
-	//Memory::CodeCave(cc0x00494EAF, dw0x00494EAF, dw0x00494EAFNops); //run from packed client //skip	//??CClientSocket //??
-
-	//Memory::CodeCave(cc0x00494EEC, dw0x00494EEC, dw0x00494EECNops); //run from packed client //skip //sub_494ED1
-	//Memory::CodeCave(cc0x00494F87, dw0x00494F87, dw0x00494F87Nops); //run from packed client //skip
-
-	//Memory::CodeCave(ccCLoginSendCheckPasswordPacket, dwCLoginSendCheckPasswordPacket, CLoginSendCheckPasswordPacketNops); //CLogin::SendCheckPasswordPacket: At the start of the sequence of pushes that contains 0C9h, place a long jmp to further down in the method to the SystemInfo basic block.Do auth patches for encoding the correct strings(user / pw)
-	//Memory::WriteByte(0x005F6B87 + 2, 0x08); //CLogin::SendCheckPasswordPacket/sub_5F6952 //??
-	//Memory::WriteByte(0x005F6BA0 + 2, 0xA0); //CLogin::SendCheckPasswordPacket //??
-	//unsigned char CA_005F6BA4[] = { 0xFF, 0x75, 0x0C, 0x90, 0x90, 0x90, 0x90 }; //CLogin::SendCheckPasswordPacket //??
-	//Memory::WriteByteArray(0x005F6BA4, CA_005F6BA4, sizeof(CA_005F6BA4)); //CLogin::SendCheckPasswordPacket //??
-
-	//Memory::FillBytes(0x009F1C04, 0x90, 5);//run from packed client //WinMain: nop ShowStartUpWndModal
-	//Memory::WriteByte(0x009F242F, 0xEB); //run from packed client //WinMain: jz->jmp for ShowADBalloon code (pretty much at the end of method, above push with small number)
-
-	//Memory::CodeCave(cc0x009F4E84, dw0x009F4E84, dw0x009F4E84Nops); //run from packed client //skip	//sub_9F4E54
-	//Memory::CodeCave(cc0x009F4EC3, dw0x009F4EC3, dw0x009F4EC3Nops); //run from packed client //skip
-
-	//Memory::CodeCave(cc0x009F4F12, dw0x009F4F12, dw0x009F4F12Nops); //run from packed client //skip	//sub_9F4F09 (defined function)
-	//Memory::CodeCave(cc0x009F4FC6, dw0x009F4FC6, dw0x009F4FC6Nops); //run from packed client //skip
-
-	//Memory::CodeCave(cc0x009F503C, dw0x009F503C, dw0x009F503CNops); //run from packed client //skip	//sub_9F4FDA
-	//Memory::CodeCave(cc0x009F51A7, dw0x009F51A7, dw0x009F51A7Nops); //run from packed client //skip	//??CWvsApp::CallUpdate
-
-	//Memory::CodeCave(cc0x009F526F, dw0x009F526F, dw0x009F526FNops); //run from packed client //long jump //sub_9F5239-9F5C4F
-	//Memory::CodeCave(cc0x009F5653, dw0x009F5653, dw0x009F5653Nops); //run from packed client //skip
-	//Memory::CodeCave(cc0x009F5833, dw0x009F5833, dw0x009F5833Nops); //run from packed client //long jump
-	//Memory::CodeCave(cc0x009F5C2C, dw0x009F5C2C, dw0x009F5C2CNops); //run from packed client //skip
-
-	//Memory::CodeCave(cc0x009F5CA3, dw0x009F5CA3, dw0x009F5CA3Nops); //dwCWvsAppRun=sub_9F5C50-9F698D CWvsApp::Run: After CClientSocket::ManipulatePacket, long jmp to "push 0FFh push 0 push 0"
-	//Memory::CodeCave(cc0x009F5FBD, dw0x009F5FBD, dw0x009F5FBDNops); //run from packed client	//dwCWvsAppRun	//??
-	//unsigned char CA_009F62E2[] = { 0x8B, 0x0D, 0xA8, 0xC3, 0xBE, 0x00,  0x90, 0x90, 0x90, 0x90, 0x90 }; //CWvsApp::Run: nop?
-	//Memory::WriteByteArray(0x009F62E2, CA_009F62E2, sizeof(CA_009F62E2)); //dwCWvsAppRun //CWvsApp::Run: nop call to CSecurityClient::Update while we're at it
-	//Memory::CodeCave(cc0x009F631C, dw0x009F631C, dw0x009F631CNops); //run from packed client	//dwCWvsAppRun	//??
-	//Memory::CodeCave(cc0x009F691F, dw0x009F691F, dw0x009F691FNops); //dwCWvsAppRun //CWvsApp::Run: Below IWzGr2D::RenderFrame (where it does 0-100 rand stuff), place long jmp to push 1; call Sleep way down in the method
-	////??CWvsApp::Run: At the end of the method, there's a call to _free, followed by add esp, 4, followed by a cmp ..., 12h. Skip the free by jmping straight to the cmp.
-
-	//Memory::CodeCave(cc0x009F6F36, dw0x009F6F36, dw0x009F6F36Nops); //run from packed client //skip	//sub_9F6F27
-	//Memory::CodeCave(cc0x009F6F5C, dw0x009F6F5C, dw0x009F6F5CNops); //run from packed client //skip	//near closesocket down
-
-	//Memory::CodeCave(cc0x009F7CFA, dw0x009F7CFA, dw0x009F7CFANops); //run from packed client //skip //sub_9F7CE1 
-	//Memory::CodeCave(cc0x009F7D83, dw0x009F7D83, dw0x009F7D83Nops); //run from packed client //long jump //??CWvsApp::InitializeInput
-	//Memory::CodeCave(cc0x009F81FB, dw0x009F81FB, dw0x009F81FBNops); //run from packed client //skip //sub_9F7CE1 
-
-	//Memory::CodeCave(cc0x009F84E9, dw0x009F84E9, dw0x009F84E9Nops); //run from packed client //skip //sub_9F84D0
-	//Memory::CodeCave(cc0x009F8AD4, dw0x009F8AD4, dw0x009F8AD4Nops); //run from packed client //skip
-
-	//Memory::CodeCave(cc0x00A4BB39, dw0x00A4BB39, dw0x00A4BB39Nops); //run from packed client //skip //sub_A4BB2B
-	//Memory::CodeCave(cc0x00A4BC79, dw0x00A4BC79, dw0x00A4BC79Nops); //run from packed client //skip
-
-	//Memory::CodeCave(cc0x00A4BD05, dw0x00A4BD05, dw0x00A4BD05Nops); //run from packed client //skip //sub_A4BCFF
-	//Memory::CodeCave(cc0x00A4BD4E, dw0x00A4BD4E, dw0x00A4BD4ENops); //run from packed client //skip
-
-	//Memory::CodeCave(cc0x00A4BD99, dw0x00A4BD99, dw0x00A4BD99Nops); //run from packed client //skip //sub_A4BD91
-	//Memory::CodeCave(cc0x00A4BDE3, dw0x00A4BDE3, dw0x00A4BDE3Nops); //run from packed client //skip
-
-	//Memory::CodeCave(cc0x00A4BDFE, dw0x00A4BDFE, dw0x00A4BDFENops); //run from packed client //skip //sub_A4BDF8
-	//Memory::CodeCave(cc0x00A4BE47, dw0x00A4BE47, dw0x00A4BE47Nops); //run from packed client //skip
-
-	//unsigned char CA_00E93220[] = { 0x00, 0x00, 0x00, 0x43, 0x6F, 0x43, 0x72, 0x65,  0x61, 0x74, 0x65, 0x47, 0x75, 0x69, 0x64, 0x00 }; //run from packed client //addr 00E93220 //??
-	//Memory::WriteByteArray(0x00E93220, CA_00E93220, sizeof(CA_00E93220)); //run from packed client //addr 00E93220 //??
+	//Memory::WriteByte(0x008DB387 + 3, 0xFF); //set charbar limit
+	//Memory::CodeCave(ccCUIStatusBarChatLogAddBypass, dwCUIStatusBarChatLogAddBypass, dwCUIStatusBarChatLogAddBypassNops); //set charbar limit
 
 	Memory::FillBytes(0x00C08459, 0x20, 0x00C0846E - 0x00C08459);//remove elevation requests
 	Memory::WriteByte(0x00C08459, 0x22);//remove elevation requests	//thanks stelmo for showing me how to do this
@@ -126,7 +58,7 @@ void Client::UpdateGameStartup() {
 	Memory::WriteByte(0x0049D398 + 1, 0x01);//remove elevation requests	//still not working unfortunately
 
 	Memory::FillBytes(0x00AFE084, 0x00, 0x006FE0B2 - 0x006FE084);//remove the existing server IP address in client
-	const char* serverIP_Address = Client::ServerIP_AddressFromINI.c_str();
+	const char* serverIP_Address = Client::ServerIP_AddressFromINI.c_str();//could be obselete, but keeping it in case of use by unpacked localhosts
 	Memory::WriteString(0x00AFE084, serverIP_Address);//write the user-set IP address
 	Memory::WriteString(0x00AFE084 + 16, serverIP_Address);//write the user-set IP address
 	Memory::WriteString(0x00AFE084 + 32, serverIP_Address);//write the user-set IP address
@@ -154,6 +86,31 @@ void Client::UpdateGameStartup() {
 	Memory::WriteInt(0x00780743 + 3, speedMovementCap); //set speed cap //ty ronan
 	Memory::WriteInt(0x008C4286 + 1, speedMovementCap); //set speed cap //ty ronan
 	Memory::WriteInt(0x0094D91E + 1, speedMovementCap); //set speed cap //ty ronan
+
+	Memory::WriteByte(0x0040013E, 0x2F);  //4g edit, not sure if it still works after execution
+
+	//other potential resolution edits/etc
+
+	//0043D260 //0043D3E2 //0043D5C8	//CAnimationDisplayer::Effect_RewardRullet
+	//0048B96A	//CChatBalloon::MakeScreenBalloon
+	//0049D105 //0049D218 //CConfig::
+	//004D584D //CCtrlMLEdit::CreateIMECandWnd
+	//0053EFC3 //x and y //SP_4371_UI_UIWINDOWIMG_ARIANTMATCH_RESULT
+	//0055BEE6 //0055BEEC //0055C07F //0055C086 //0055C1C5 //0055C1CD //CField_LimitedView::DrawViewRange !!!!!
+	//005EB45A //005EB464 //CItemSpeakerDlg::CItemSpeakerDlg
+	//00663079 //CMob::Init
+	//007C252C //007C2531 //CTradingRoomDlg::OnCreate
+	//007E15BE //CSlideNotice::CSlideNotice
+	//007E19CA //CSlideNotice::SetMsg
+	//007E9ABC //007E9ACD //sub_7E99BC
+	//007EB409 //007EB41A //sub_7EB303
+	//007F2007 //007F201B //sub_7F1F25
+	//0085F341 //0085F361 //sub_85F303
+	//008C7FEA //NOP at +2,+3,+4,+5 //sub_8C7FB6  related to CUIStat::Draw(tagRECT const *) //dunno what they were trying to do here, noping jumps
+	//008D2C03 //008D2EED //008D2FB3 //008D305B //008D3124 //008D31EC //008D3273 //008D32FA //008D3381 //008D3408 //008D348F //008D358B //008D369B //CUIStatusBar::OnCreate
+	//008D405E //008D40D4 //sub_8D3B2F
+	//008D4B93 //008D4BBC //CUIStatusBar::SetChatType
+	//00960581 //00960839 //00960C67 //00960DED //CUserLocal::DrawCombo
 }
 
 void Client::UpdateResolution() {
@@ -165,8 +122,8 @@ void Client::UpdateResolution() {
 
 	Memory::WriteInt(dwApplicationHeight + 1, m_nGameHeight);//push 600
 	Memory::WriteInt(dwApplicationWidth + 1, m_nGameWidth);	//push 800 ; CWvsApp::InitializeGr2D
-	Memory::WriteInt(dwCursorVectorVPos + 2, (unsigned int)floor(-m_nGameHeight / 2));//push -300				!!moves all interactable UI elements!!
-	Memory::WriteInt(dwCursorVectorHPos + 2, (unsigned int)floor(-m_nGameWidth / 2));	//push -400 ; CInputSystem::SetCursorVectorPos				!!moves all interactable UI elements!!
+	Memory::WriteInt(dwCursorVectorVPos + 2, (int)floor(-m_nGameHeight / 2));//push -300				!!moves all interactable UI elements!!
+	Memory::WriteInt(dwCursorVectorHPos + 2, (int)floor(-m_nGameWidth / 2));	//push -400 ; CInputSystem::SetCursorVectorPos				!!moves all interactable UI elements!!
 	Memory::WriteInt(dwUpdateMouseLimitVPos + 1, m_nGameHeight);//mov ecx,600
 	Memory::WriteInt(dwUpdateMouseLimitHPos + 1, m_nGameWidth);	//mov ecx,800 ; CInputSystem::UpdateMouse
 	Memory::WriteInt(dwCursorPosLimitVPos + 1, m_nGameHeight);//mov eax,600
@@ -199,7 +156,7 @@ void Client::UpdateResolution() {
 	Memory::WriteInt(0x00437181 + 1, m_nGameWidth);	//mov esi,800 ; CreateWnd
 	Memory::WriteInt(0x0053808B + 1, m_nGameHeight);//push 600
 	Memory::WriteInt(0x00538091 + 1, m_nGameWidth);	//push 800 ; RelMove?
-	Memory::WriteInt(0x004CC160 + 1, m_nGameWidth);	//mov [ebp-16],800 ; CreateWnd
+	Memory::WriteInt(0x004CC160 + 3, m_nGameWidth);	//mov [ebp-16],800 ; CreateWnd
 	Memory::WriteInt(0x004CC2C5 + 2, m_nGameHeight);//cmp ecx,600
 	Memory::WriteInt(0x004CC2B0 + 1, m_nGameWidth);	//mov eax,800 ; CreateWnd
 	Memory::WriteInt(0x004D59B2 + 1, m_nGameHeight);//mov eax,800
@@ -263,31 +220,31 @@ void Client::UpdateResolution() {
 	Memory::WriteInt(0x00640606 + 1, m_nGameWidth);	//mov ecx,800
 	Memory::WriteInt(0x0064067E + 1, m_nGameWidth);	//mov ecx,800
 	Memory::WriteInt(0x00640639 + 1, m_nGameWidth);	//mov ecx,800
-	Memory::WriteInt(0x0064043E + 1, (unsigned int)floor(m_nGameWidth / 2));	//mov edi,400
-	Memory::WriteInt(0x00640443 + 1, (unsigned int)floor(m_nGameHeight / 2));	//mov esi,300
-	Memory::WriteInt(0x00640626 + 1, (unsigned int)floor(m_nGameWidth / 2));	//add eax,400 ; bunch of modulus stuff
+	Memory::WriteInt(0x0064043E + 1, (int)floor(m_nGameWidth / 2));	//mov edi,400
+	Memory::WriteInt(0x00640443 + 1, (int)floor(m_nGameHeight / 2));	//mov esi,300
+	Memory::WriteInt(0x00640626 + 1, (int)floor(m_nGameWidth / 2));	//add eax,400 ; bunch of modulus stuff
 
 	Memory::WriteInt(0x00641038 + 2, m_nGameHeight);//??possibly related to player display
 	Memory::WriteInt(0x0064103F + 2, m_nGameWidth);//??possibly related to player display
-	Memory::WriteInt(0x00641048 + 1, (unsigned int)floor(-m_nGameHeight / 2));	//mov esi,-300
-	Memory::WriteInt(0x00641050 + 1, (unsigned int)floor(-m_nGameWidth / 2));		//mov esi,-400 ;
+	Memory::WriteInt(0x00641048 + 1, (int)floor(-m_nGameHeight / 2));	//mov esi,-300
+	Memory::WriteInt(0x00641050 + 1, (int)floor(-m_nGameWidth / 2));		//mov esi,-400 ;
 	Memory::WriteInt(0x00641A19 + 3, m_nGameHeight);//mov [ebp+28],600
 	Memory::WriteInt(0x00641A12 + 3, m_nGameWidth);	//mov [ebp+32],800 ; idk
 	Memory::WriteInt(0x00641B38 + 3, m_nGameHeight);//mov [ebp-32],600
 	Memory::WriteInt(0x00641B2E + 3, m_nGameWidth);	//mov [ebp-36],800 ; CAnimationDisplayer::SetCenterOrigin
 
-	Memory::WriteInt(0x006CD842 + 1, (unsigned int)floor(m_nGameWidth / 2));	//push 400 ; RelMove?
+	Memory::WriteInt(0x006CD842 + 1, (int)floor(m_nGameWidth / 2));	//push 400 ; RelMove?
 
-	Memory::WriteInt(0x0059A0A2 + 6, (unsigned int)floor(m_nGameHeight / 2));	//mov [ebx+2364],300
-	Memory::WriteInt(0x0059A09C + 2, (unsigned int)floor(m_nGameWidth / 2));	//mov [esi],400	; CInputSystem::LoadCursorState
+	Memory::WriteInt(0x0059A0A2 + 6, (int)floor(m_nGameHeight / 2));	//mov [ebx+2364],300
+	Memory::WriteInt(0x0059A09C + 2, (int)floor(m_nGameWidth / 2));	//mov [esi],400	; CInputSystem::LoadCursorState
 	Memory::WriteInt(0x0080546C + 1, m_nGameHeight);//mov edi,600
 	Memory::WriteInt(0x00805459 + 1, m_nGameWidth);	//mov edx,800 ; CUIEventAlarm::CreateEventAlarm
 	Memory::WriteInt(0x008CFD4B + 1, m_nGameHeight - 22);	//push 578
 	Memory::WriteInt(0x008CFD50 + 1, m_nGameWidth);	//push 800
-	Memory::WriteInt(0x0053836D + 1, (unsigned int)floor(-m_nGameHeight / 2));//push -300
-	Memory::WriteInt(0x00538373 + 1, (unsigned int)floor(-m_nGameWidth / 2));	//push -400	; RelMove?
-	Memory::WriteInt(0x0055BB2F + 1, (unsigned int)floor(-m_nGameHeight / 2));//push -300
-	Memory::WriteInt(0x0055BB35 + 1, (unsigned int)floor(-m_nGameWidth / 2));	//push -400 ; RelMove?
+	Memory::WriteInt(0x0053836D + 1, (int)floor(-m_nGameHeight / 2));//push -300
+	Memory::WriteInt(0x00538373 + 1, (int)floor(-m_nGameWidth / 2));	//push -400	; RelMove?
+	Memory::WriteInt(0x0055BB2F + 1, (int)floor(-m_nGameHeight / 2));//push -300
+	Memory::WriteInt(0x0055BB35 + 1, (int)floor(-m_nGameWidth / 2));	//push -400 ; RelMove?
 
 	Memory::WriteInt(0x005A8B46 + 1, m_nGameHeight);//mov eax,600
 	Memory::WriteInt(0x005A8B56 + 1, m_nGameWidth);	//mov eax,800 ; RelMove?
@@ -305,9 +262,8 @@ void Client::UpdateResolution() {
 	Memory::WriteInt(0x005C2D72 + 1, m_nGameWidth);	//mov eax,800 ; RelMove?
 	Memory::WriteInt(0x005E3FA0 + 1, m_nGameHeight);//push 600
 
-	Memory::WriteInt(0x005F64DE + 1, (unsigned int)floor(-m_nGameHeight / 2));	//push -300 ;
-	Memory::WriteInt(0x005F6627 + 1, (unsigned int)floor(-m_nGameHeight / 2));	//push -300 ;
-	Memory::WriteInt(0x005F464D + 1, (unsigned int)floor(m_nGameWidth / 2));//??related to login game frame
+	Memory::WriteInt(0x005F64DE + 1, (int)floor(-m_nGameHeight / 2));	//push -300 ;
+	Memory::WriteInt(0x005F6627 + 1, (int)floor(-m_nGameHeight / 2));	//push -300 ;
 
 	Memory::WriteInt(0x0060411C + 1, m_nGameHeight);//push 600
 	//Memory::WriteInt(0x00604126 + 1, floor(-m_nGameWidth / 2));	//push -300 //moves characters side to side on char select //unnecessary atm
@@ -322,17 +278,17 @@ void Client::UpdateResolution() {
 	Memory::WriteInt(0x0061DB10 + 1, (m_nGameWidth / 2) - 201);//??likely related to login pop-up msg
 	Memory::WriteInt(0x0061DB19 + 1, (m_nGameWidth / 2) - 181);//??likely related to login pop-up msg
 
-	Memory::WriteInt(0x004372B1 + 1, (unsigned int)floor(-m_nGameHeight / 2));//push -300
-	Memory::WriteInt(0x004372B6 + 1, (unsigned int)floor(-m_nGameWidth / 2));	//push -400 ; RelMove?
+	Memory::WriteInt(0x004372B1 + 1, (int)floor(-m_nGameHeight / 2));//push -300
+	Memory::WriteInt(0x004372B6 + 1, (int)floor(-m_nGameWidth / 2));	//push -400 ; RelMove?
 	Memory::WriteInt(0x006CE3AB + 1, m_nGameWidth);	//push 800
 	Memory::WriteInt(0x007E1CB7 + 1, m_nGameWidth);	//push 800
 	Memory::WriteInt(0x008D82F5 + 1, m_nGameHeight - 22);	//push 578
 	Memory::WriteInt(0x008D82FA + 1, m_nGameWidth);	//push 800 ; CreateWnd?
-	Memory::WriteInt(0x00935870 + 1, (unsigned int)floor(m_nGameHeight / 2));	//push 300
+	Memory::WriteInt(0x00935870 + 1, (int)floor(m_nGameHeight / 2));	//push 300
 	Memory::WriteInt(0x0093586B + 1, m_nGameWidth);	// push 800 ; RelMove? (Skills)
 	Memory::WriteInt(0x009DFD5C + 1, m_nGameWidth);	//mov ecx,800
 	Memory::WriteInt(0x009DFED2 + 1, m_nGameHeight);//mov ecx,600	; IWzVector2D::RelMove
-	Memory::WriteInt(0x009F6ADD + 1, (unsigned int)floor(m_nGameHeight / 2)); //push 300 ; MapleStoryClass
+	Memory::WriteInt(0x009F6ADD + 1, (int)floor(m_nGameHeight / 2)); //push 300 ; MapleStoryClass
 	Memory::WriteInt(0x006D50D8 + 1, m_nGameHeight);//push 600
 	Memory::WriteInt(0x0074BAA9 + 1, m_nGameHeight);//push 600
 	Memory::WriteInt(0x0074B951 + 1, m_nGameHeight);//push 600
@@ -355,30 +311,30 @@ void Client::UpdateResolution() {
 	Memory::WriteInt(0x008D1FF4 + 1, m_nGameHeight - 22);	//push 578
 	Memory::WriteInt(0x008D1FF9 + 1, m_nGameWidth);	//push 800 ; CUIStatusBar
 	Memory::WriteInt(0x0062F5DF + 1, m_nGameHeight);//push 600
-	Memory::WriteInt(0x0062F5E4 + 1, m_nGameWidth);	//push 800 ; (UI/Logo/Nexon)
+	Memory::WriteInt(0x0062F5E4 + 1, m_nGameWidth);	//push 800 ; (UI/Logo/NXXXon)
 	Memory::WriteInt(0x004EDB89 + 1, m_nGameWidth);	//mov ecx,800
 	Memory::WriteInt(0x004EDB78 + 1, m_nGameHeight);//mov ecx,600 ; CreateWnd
 	Memory::WriteInt(0x004EDAD8 + 1, m_nGameWidth);	//mov ecx,800
 	Memory::WriteInt(0x009F7079, m_nGameHeight);	// dd 600
 	Memory::WriteInt(0x009F707E, m_nGameWidth);	// dd 800
-	Memory::WriteInt(0x00BE2738, (unsigned int)floor(m_nGameWidth / 2));	// dd 400
-	Memory::WriteInt(0x00BE2DF4, (unsigned int)floor(m_nGameHeight / 2));	// dd 300
-	Memory::WriteInt(0x00BE2DF0, (unsigned int)floor(m_nGameWidth / 2));	// dd 400
-	Memory::WriteInt(0x00640656 + 2, (unsigned int)floor(-m_nGameWidth / 2));		//add edi,-400 ;
+	Memory::WriteInt(0x00BE2738, (int)floor(m_nGameWidth / 2));	// dd 400
+	Memory::WriteInt(0x00BE2DF4, (int)floor(m_nGameHeight / 2));	// dd 300
+	Memory::WriteInt(0x00BE2DF0, (int)floor(m_nGameWidth / 2));	// dd 400
+	Memory::WriteInt(0x00640656 + 2, (int)floor(-m_nGameWidth / 2));		//add edi,-400 ;
 
-	Memory::WriteInt(0x006CE4C6 + 1, (unsigned int)floor(-m_nGameWidth / 2));		//push -400 ;
-	Memory::WriteInt(0x009E2E85 + 1, (unsigned int)floor(-m_nGameHeight / 2));	//push -300		overall screen visible UI scaling
-	Memory::WriteInt(0x009E2E8B + 1, (unsigned int)floor(-m_nGameWidth / 2));		//push -400 ;	overall screen visible UI scaling
+	Memory::WriteInt(0x006CE4C6 + 1, (int)floor(-m_nGameWidth / 2));		//push -400 ;
+	Memory::WriteInt(0x009E2E85 + 1, (int)floor(-m_nGameHeight / 2));	//push -300		overall screen visible UI scaling
+	Memory::WriteInt(0x009E2E8B + 1, (int)floor(-m_nGameWidth / 2));		//push -400 ;	overall screen visible UI scaling
 
-	Memory::WriteInt(0x0093519A + 1, (unsigned int)floor(-m_nGameHeight / 2));	//push -300 ;
-	Memory::WriteInt(0x00954433 + 1, (unsigned int)floor(-m_nGameHeight / 2));	//push -300 ;
-	Memory::WriteInt(0x00981555 + 1, (unsigned int)floor(-m_nGameHeight / 2));	//push -300 ;
-	Memory::WriteInt(0x00981F7A + 2, (unsigned int)floor(-m_nGameHeight / 2));	//push -300 ;
-	Memory::WriteInt(0x00A448B0 + 2, (unsigned int)floor(-m_nGameHeight / 2));	//push -300 ; CWvsPhysicalSpace2D::Load]
+	Memory::WriteInt(0x0093519A + 1, (int)floor(-m_nGameHeight / 2));	//push -300 ;
+	Memory::WriteInt(0x00954433 + 1, (int)floor(-m_nGameHeight / 2));	//push -300 ;
+	Memory::WriteInt(0x00981555 + 1, (int)floor(-m_nGameHeight / 2));	//push -300 ;
+	Memory::WriteInt(0x00981F7A + 2, (int)floor(-m_nGameHeight / 2));	//push -300 ;
+	Memory::WriteInt(0x00A448B0 + 2, (int)floor(-m_nGameHeight / 2));	//push -300 ; CWvsPhysicalSpace2D::Load]
 
-	Memory::WriteInt(0x0066BACE + 2, (unsigned int)floor(-m_nGameWidth / 2));		//and ecx,-400
-	Memory::WriteInt(0x009B76BD + 3, (unsigned int)floor(-m_nGameHeight / 2));	//push -300
-	Memory::WriteInt(0x009B76CB + 3, (unsigned int)floor(m_nGameHeight / 2));		//push 300
+	Memory::WriteInt(0x0066BACE + 2, (int)floor(-m_nGameWidth / 2));		//and ecx,-400
+	Memory::WriteInt(0x009B76BD + 3, (int)floor(-m_nGameHeight / 2));	//push -300
+	Memory::WriteInt(0x009B76CB + 3, (int)floor(m_nGameHeight / 2));		//push 300
 
 	Memory::WriteInt(0x009F7078 + 1, m_nGameHeight);//??related to application dimensions	//(ragezone release merge)//thanks mr mr of ragezone for these addresses
 	Memory::WriteInt(0x009F707D + 1, m_nGameWidth);//??related to application dimensions
@@ -390,8 +346,8 @@ void Client::UpdateResolution() {
 	Memory::WriteInt(0x00991854 + 1, m_nGameHeight);//??unknown cwnd function
 	Memory::WriteInt(0x0099185F + 1, (m_nGameWidth / 2) - 134);//??unknown cwnd function
 	Memory::WriteInt(0x00991867 + 1, (m_nGameWidth / 2) - 133);//??unknown cwnd function
-	Memory::WriteInt(0x00992BA7 + 1, (unsigned int)floor(m_nGameWidth / 2));//??unknown cwnd function, possibly related to cutildlg
-	Memory::WriteInt(0x00992BAC + 1, (unsigned int)floor(m_nGameHeight / 2));//??unknown cwnd function, possibly related to cutildlg
+	Memory::WriteInt(0x00992BA7 + 1, (int)floor(m_nGameWidth / 2));//??unknown cwnd function, possibly related to cutildlg
+	Memory::WriteInt(0x00992BAC + 1, (int)floor(m_nGameHeight / 2));//??unknown cwnd function, possibly related to cutildlg
 
 	Memory::WriteInt(0x007E1E07 + 2, m_nGameWidth);//??related to displaying server message at top of screen
 	Memory::WriteInt(0x007E19CA + 2, m_nGameWidth);//??related to displaying server message at top of screen
@@ -426,7 +382,7 @@ void Client::UpdateResolution() {
 	if (WindowedMode) {
 		unsigned char forced_window[] = { 0xb8, 0x00, 0x00, 0x00, 0x00 }; //force window mode	//thanks stelmo for showing me how to do this
 		Memory::WriteByteArray(0x009F7A9B, forced_window, sizeof(forced_window));//force window mode
-	}
+	} //*note:CreateWindowExA_Hook doesnt work yet//old forced window mode, is now handled in CreateWindowExA_Hook, keeping for reference
 	if (RemoveLogos) {
 		Memory::FillBytes(0x0062EE54, 0x90, 21);	//no Logo @launch //Thanks Denki!!
 	}
@@ -452,7 +408,8 @@ void Client::UpdateResolution() {
 
 	Memory::WriteInt(0x007C2531 + 1, m_nGameHeight - 80);//??
 
-	//Memory::WriteInt(0x0089B796 + 2, m_nGameHeight - 18);//???related to exp gain/item pick up msg
+	Memory::WriteInt(0x0089B796 + 1, m_nGameHeight - 18);//???related to exp gain/item pick up msg //??!!found in another diff also !!!!!!!!!!!!
+
 	//Memory::WriteInt(0x0089BA03 + 1, m_nGameHeight - 96); //??related to exp gain/item pick up msg
 	//Memory::WriteInt(0x008D3F73 + 1, m_nGameHeight - 93);//bottom frame, white area
 	//Memory::WriteInt(0x008D3FE5 + 1, m_nGameHeight - 93);//bottom frame, grey area
@@ -460,11 +417,13 @@ void Client::UpdateResolution() {
 	//Memory::WriteInt(0x008D83D1 + 1, m_nGameHeight - 55); //role
 	//Memory::WriteInt(0x008D8470 + 1, m_nGameHeight - 40); //name of character
 
-	//Memory::WriteInt(0x008DE850 + 1, 580);//quickslotcheckX//interactivity of bottom buttoms
-	//Memory::WriteInt(0x008DE896 + 1, 647);//quickslotcheckX//interactivity of bottom buttoms
-	//Memory::WriteInt(0x008DE82B + 1, 507);///quickslotcheckY //interactivity of bottom buttoms
+	//Memory::WriteInt(0x008DE850 + 1, 580);//quickslotcheckX//interactivity of bottom buttoms	//test, could be wrong
+	//Memory::WriteInt(0x008DE896 + 1, 647);//quickslotcheckX//interactivity of bottom buttoms	//test, could be wrong
+	//Memory::WriteInt(0x008DE82B + 1, 507);///quickslotcheckY //interactivity of bottom buttoms //test, could be wrong
+	//008DE8A9 //CUIStatusBar::HitTest //related to prev^
 
 	//Memory::WriteInt(0x008DA11C + 1, m_nGameHeight - 19);//??likely various status bar UI components
+	//008DA115 //sub_8D850B //related to prev^ 
 	//Memory::WriteInt(0x008DA3D4 + 1, m_nGameHeight - 56); //exphpmp % labels
 	//Memory::WriteInt(0x008DA463 + 1, m_nGameHeight - 51); //stat bar gradient or bracket
 	//Memory::WriteInt(0x008DA4F2 + 1, m_nGameHeight - 51);//stat bar gradient or bracket
@@ -500,8 +459,11 @@ void Client::UpdateResolution() {
 	//Memory::WriteInt(0x008D3056 + 1, m_nGameHeight - 57);
 	//Memory::WriteInt(0x008D311F + 1, m_nGameHeight - 57);
 	//Memory::WriteInt(0x008D31E7 + 1, m_nGameHeight - 57);//bottom 4 large buttons
+
 	Memory::WriteInt(0x00849E39 + 1, m_nGameHeight - 177); //system menu pop up
+	//00849E3F related to previous^
 	Memory::WriteInt(0x0084A5B7 + 1, m_nGameHeight - 281); //shortcuts pop up	//0x84A5BD -  System Options "X" Position. if needed
+	//0084A5BD related to previous^
 
 	Memory::WriteInt(0x00522C73 + 1, m_nGameHeight - 92 - 10);// ??various requests like party, guild, friend, family, invites that pop up
 	Memory::WriteInt(0x00522E65 + 1, m_nGameHeight - 92 - 10); // ??various requests like party, guild, friend, family, invites that pop up
@@ -515,20 +477,22 @@ void Client::UpdateResolution() {
 	Memory::WriteInt(0x00523FA3 + 1, m_nGameHeight - 92 - 10);// various requests like party, guild, friend, family, invites that pop up
 	Memory::WriteInt(0x005243DB + 1, m_nGameHeight - 92 - 10);// various requests like party, guild, friend, family, invites that pop up
 	Memory::WriteInt(0x00523154 + 1, m_nGameHeight - 102 - 10);//?? various requests like party, guild, friend, family, invites that pop up
+	//0052315C part of the previous^
 
+	int reqPopOffset = 41;
 	Memory::WriteInt(0x0052418C + 1, m_nGameHeight - 102 - 10);//party quest available pop-up y axis		my first address find own my own
-
-	Memory::WriteInt(0x00523092 + 1, 423);// 交易申请气泡x坐标
-	Memory::WriteInt(0x0052336D + 1, m_nGameWidth - 942 + 26 + 37 + 62);//various requests like party, guild, friend, family, invites that pop up //Party Invite
-	Memory::WriteInt(0x00522E79 + 1, m_nGameWidth - 942 + 26 + 37 + 62);//various requests like party, guild, friend, family, invites that pop up //friend request
-	Memory::WriteInt(0x00522C87 + 1, m_nGameWidth - 942 + 26 + 37 + 62);//various requests like party, guild, friend, family, invites that pop up	// Guild Invite
-	//Memory::WriteInt(0x005235A9 + 1, m_nGameWidth - 942);//various requests like party, guild, friend, family, invites that pop up	// Quest Complete, currently unneeded as working without it
-	Memory::WriteInt(0x0052379F + 1, m_nGameWidth - 942 + 26 + 37 + 62);//various requests like party, guild, friend, family, invites that pop up//??
-	Memory::WriteInt(0x00523991 + 1, m_nGameWidth - 942 + 26 + 37 + 62);//various requests like party, guild, friend, family, invites that pop up/??
-	Memory::WriteInt(0x00523BC5 + 1, m_nGameWidth - 942 + 26 + 37 + 62);//various requests like party, guild, friend, family, invites that pop up/??
-	Memory::WriteInt(0x00523DC5 + 1, m_nGameWidth - 942 + 26 + 37 + 62);//various requests like party, guild, friend, family, invites that pop up// ??
-	Memory::WriteInt(0x00523FB7 + 1, m_nGameWidth - 942 + 26 + 37 + 62);//various requests like party, guild, friend, family, invites that pop up// ??
-	Memory::WriteInt(0x005243EF + 1, m_nGameWidth - 942 + 26 + 37 + 62);//various requests like party, guild, friend, family, invites that pop up//??
+	//005241A0 //SP_1299_UI_UIWINDOWIMG_FADEYESNO_BACKGRND5 //no idea what this is for, but if you notice broken things in pop up requests, this could be your addy
+	Memory::WriteInt(0x00523092 + 1, m_nGameWidth - 942);//various requests like party, guild, friend, family, invites that pop up	//trade		 //thank you Rain for the width addresses
+	Memory::WriteInt(0x0052336D + 1, m_nGameWidth - 942);//various requests like party, guild, friend, family, invites that pop up //Party Invite
+	Memory::WriteInt(0x00522E79 + 1, m_nGameWidth - 942);//various requests like party, guild, friend, family, invites that pop up //friend request
+	Memory::WriteInt(0x00522C87 + 1, m_nGameWidth - 942);//various requests like party, guild, friend, family, invites that pop up	// Guild Invite
+	//Memory::WriteInt(0x005235A9 + 1, 464 - reqPopOffset);//various requests like party, guild, friend, family, invites that pop up	// Quest Complete, currently unneeded as working without it
+	Memory::WriteInt(0x0052379F + 1, m_nGameWidth - 942);//various requests like party, guild, friend, family, invites that pop up//??
+	Memory::WriteInt(0x00523991 + 1, m_nGameWidth - 942);//various requests like party, guild, friend, family, invites that pop up/??
+	Memory::WriteInt(0x00523BC5 + 1, m_nGameWidth - 942);//various requests like party, guild, friend, family, invites that pop up/??
+	Memory::WriteInt(0x00523DC5 + 1, m_nGameWidth - 942);//various requests like party, guild, friend, family, invites that pop up// ??
+	Memory::WriteInt(0x00523FB7 + 1, m_nGameWidth - 942);//various requests like party, guild, friend, family, invites that pop up// ??
+	Memory::WriteInt(0x005243EF + 1, m_nGameWidth - 942);//various requests like party, guild, friend, family, invites that pop up//??
 
 	//Memory::WriteInt(0x008D326E + 1, m_nGameHeight - 85); //smol buttoms right of chat box (all - 85 ones)
 	//Memory::WriteInt(0x008D32F5 + 1, m_nGameHeight - 85);
@@ -538,8 +502,10 @@ void Client::UpdateResolution() {
 	//Memory::WriteInt(0x008D3586 + 1, m_nGameHeight - 85);
 	//Memory::WriteInt(0x008D3696 + 1, m_nGameHeight - 85);
 	//Memory::WriteInt(0x008D4058 + 1, m_nGameHeight - 85);
-	//Memory::WriteInt(0x008DF903 + 1, m_nGameHeight - 85);
-	//Memory::WriteInt(0x008DFFCF + 1, m_nGameHeight - 85);
+	//Memory::WriteInt(0x008DF903 + 1, m_nGameHeight - 85);	
+	//008DF908 addr of related^ //CUIStatusBar::ToggleQuickSlot 
+	//Memory::WriteInt(0x008DFFCF + 1, m_nGameHeight - 85);	//CUIStatusBar::SetButtonBlink
+	//008DFFD4 //related to^
 	//Memory::WriteInt(0x008D40CE + 1, m_nGameHeight - 81);//smol buttoms right of chat box (all - 85 ones)
 
 	//Memory::CodeCave(PositionBossBarY2, 0x007E169B, 6);//boss bar, check for server msg, looking in wrong address...
@@ -604,23 +570,23 @@ void Client::UpdateResolution() {
 	iHeightOfsetted8 = 56; iWidthOfsetted8 = 545; iTopOfsetted8 = 531 + myHeight; iLeftOfsetted8 = 255 + myWidth;
 	Memory::CodeCave(ITCFix8, 0x0059EAAE, 17);
 
-	Memory::WriteInt(0x00641F61 + 1, (unsigned int)floor(m_nGameWidth / 2));	//mov ebc,400 ;  VRleft		//camera movement
-	Memory::WriteInt(0x00641FC8 + 1, (unsigned int)floor(m_nGameHeight / 2));	//add eax,300  ; VRTop //camera movement //not working for most maps
-	//Memory::WriteInt(0x0064202F + 2, (unsigned int)floor(m_nGameWidth / 2));	//mov ebc,400 ;  VRright		//camera movement	//crashes
-	Memory::WriteInt(0x0064208F + 1, (unsigned int)floor(m_nGameHeight / 2));	//add eax,300  ; VRbottom //camera movement //not working for most maps
+	Memory::WriteInt(0x00641F61 + 1, (int)floor(m_nGameWidth / 2));	//mov ebc,400 ;  VRleft		//camera movement
+	Memory::WriteInt(0x00641FC8 + 1, (int)floor(m_nGameHeight / 2));	//add eax,300  ; VRTop //camera movement //not working for most maps
+	//Memory::WriteInt(0x0064202F + 2, (int)floor(m_nGameWidth / 2));	//mov ebc,400 ;  VRright		//camera movement	//crashes
+	Memory::WriteInt(0x0064208F + 1, (int)floor(m_nGameHeight / 2));	//add eax,300  ; VRbottom //camera movement //not working for most maps
 
 	myAlwaysViewRestoreFixOffset = myHeight; //parameters for fix view restore all maps number ?????working????!!!
 	Memory::CodeCave(AlwaysViewRestoreFix, dwAlwaysViewRestoreFix, dwAlwaysViewRestoreFixNOPs);	//fix view restora on all maps, currently does nothing; i likely looked in the wrong area
 
-	if (CustomLoginFrame) {
-		Memory::WriteInt(0x005F481E + 1, (unsigned int)floor(-m_nGameHeight / 2));//push -300				!!game login frame!! turn this on if you edit UI.wz and use a frame that matches your res
-		Memory::WriteInt(0x005F4824 + 1, (unsigned int)floor(-m_nGameWidth / 2));	//push -400 ; RelMove?				!!game login frame!! turn this on if you edit UI.wz and use a frame that matches your res
+	if (MainMain::CustomLoginFrame) {
+		Memory::WriteInt(0x005F481E + 1, (int)floor(-m_nGameHeight / 2));//push -300				!!game login frame!! turn this on if you edit UI.wz and use a frame that matches your res
+		Memory::WriteInt(0x005F4824 + 1, (int)floor(-m_nGameWidth / 2));	//push -400 ; RelMove?				!!game login frame!! turn this on if you edit UI.wz and use a frame that matches your res
 	}
 	//nHeightOfsettedloginFrameFix = 0 + myHeight; nWidthOfsettedloginFrameFix = 0 + myWidth;
 	//nTopOfsettedloginFrameFix = 0 + myHeight; nLeftOfsettedloginFrameFix = 0 + myWidth; //parameters for fix cash preview
 	//Memory::CodeCave(loginFrameFix, dwloginFrameFix, loginFrameFixNOPs); //failed login frame fix =(
 
-	if (bigLoginFrame) {
+	if (MainMain::bigLoginFrame) {
 		Memory::WriteInt(0x005F464D + 1, m_nGameWidth - 165);	//mov eax,800 ; RelMove?	//game version number for login frames that hug the side of the screen //you will still need to offset ntop, and that may require a code cave if your height resolution is too big
 	}
 	else {
@@ -628,7 +594,7 @@ void Client::UpdateResolution() {
 		Memory::CodeCave(VersionNumberFix, dwVersionNumberFix, dwVersionNumberFixNOPs);	//game version number fix //use this if you use no frame or default client frame
 	}
 
-	if (!bigLoginFrame) {
+	if (!MainMain::bigLoginFrame) {
 		nHeightOfsettedLoginBackCanvasFix = 352 + myHeight; nWidthOfsettedLoginBackCanvasFix = 125 + myWidth;//para for world select buttonsViewRec
 		nTopOfsettedLoginBackCanvasFix = 125 + myHeight; nLeftOfsettedLoginBackCanvasFix = 0 + myWidth;
 		Memory::CodeCave(ccLoginBackCanvasFix, dwLoginBackCanvasFix, LoginBackCanvasFixNOPs);	//world select buttons fix		//thank you teto for pointing out my error in finding the constructor
@@ -642,7 +608,7 @@ void Client::UpdateResolution() {
 
 		a1x = 0 + myWidth; a2x = -149 + myWidth; a2y = 0 + myHeight; a3 = 25; a1y = -250; //a4 = 0;	//LoginDescriptor params
 		Memory::WriteInt(0x0060D849 + 1, 300 + a1y); //speed 1	//temporary fix by increasing the speed of display until i get good enough at procedural programming 
-		//and memory management and reverse engineering to use nexon's own functions to put a black layer with greater z value to cover the tabs being shown off screen at origin
+		//and memory management and reverse engineering to use nXXXon's own functions to put a black layer with greater z value to cover the tabs being shown off screen at origin
 		Memory::CodeCave(ccLoginDescriptorFix, dwLoginDescriptorFix, LoginDescriptorFixNOPs);	//world LoginDescriptor fix	
 	}
 
@@ -694,6 +660,7 @@ void Client::UpdateResolution() {
 	//Memory::CodeCave(testingCodeCave2, dwTesting2, Testing2NOPs); //testing
 	//Memory::CodeCave(testingCodeCave3, dwTesting3, Testing3NOPs); //testing
 	//Memory::CodeCave(testingCodeCave4, dwTesting4, Testing4NOPs); //testing
+	//std::cout << "Client Value: " << MainMain::CustomLoginFrame << std::endl;
 }
 
 void Client::EnableNewIGCipher() {//??not called //no idea what cipher is
