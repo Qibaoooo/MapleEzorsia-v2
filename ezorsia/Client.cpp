@@ -925,3 +925,13 @@ void Client::MoreHook() {
 	// 喇叭
 	Memory::WriteInt(0x0045A5BE + 1, 9999);
 }
+
+void Client::WorldMap()
+{
+
+	//解除世界大地图限制
+	// WorldMap Cap Increase
+	Memory::WriteByteArray(0x009EA030, world_cap_increase_array, sizeof(world_cap_increase_array));
+	//Memory::WriteByte(0x009EA032, 0xFF);//map
+	Memory::WriteInt(0x009EA030 + 2, 0xB4);
+}

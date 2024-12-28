@@ -1577,3 +1577,5 @@ __declspec(naked) void darkMap3cc() {
 		jmp darkMap3ccRtn
 	}
 }
+
+unsigned char world_cap_increase_array[] = { 0x81, 0xFE };//129~254
