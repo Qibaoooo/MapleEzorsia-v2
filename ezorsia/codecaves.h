@@ -1579,3 +1579,17 @@ __declspec(naked) void darkMap3cc() {
 }
 
 unsigned char world_cap_increase_array[] = { 0x81, 0xFE };//129~254
+
+
+int wordMapX, wordMapY;
+DWORD wordMapUIccRtn = 0x009EB5A1;
+__declspec(naked) void wordMapUIcc()
+{
+	__asm {
+		push 20Ch
+		push 29Ah
+		push wordMapY
+		push wordMapX
+		jmp wordMapUIccRtn
+	}
+}

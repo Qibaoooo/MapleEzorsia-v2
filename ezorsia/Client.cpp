@@ -924,6 +924,11 @@ void Client::MoreHook() {
 	}
 	// 喇叭
 	Memory::WriteInt(0x0045A5BE + 1, 9999);
+
+
+	// 窗口保存位置
+	Memory::WriteInt(0x0049D218 + 1, m_nGameWidth - 16);// 窗口保存位置边界 x
+	Memory::WriteInt(0x0049D268 + 1, m_nGameHeight - 16);// 窗口保存位置边界 y
 }
 
 void Client::WorldMap()
@@ -934,4 +939,9 @@ void Client::WorldMap()
 	Memory::WriteByteArray(0x009EA030, world_cap_increase_array, sizeof(world_cap_increase_array));
 	//Memory::WriteByte(0x009EA032, 0xFF);//map
 	Memory::WriteInt(0x009EA030 + 2, 0xB4);
+
+	// 大地图居中
+	wordMapX = (m_nGameWidth - 666) / 2;
+	wordMapY = (m_nGameHeight - 524) / 2;
+	Memory::CodeCave(wordMapUIcc, 0x009EB594, 13);
 }
