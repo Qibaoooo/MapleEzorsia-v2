@@ -638,3 +638,8 @@ void Client::UpdateLogin() {	//un-used //may still contain some useful addresses
 	Memory::WriteByte(dwLoginWebHomeBtn + 1, -127); // x-pos
 	Memory::WriteByte(dwLoginWebRegisterBtn + 1, -127); // x-pos
 }
+
+void Client::UpdateQOL() {
+	double dClimbingSpeed = 3.0;
+	Memory::WriteInt(0x009CC6F9 + 2, reinterpret_cast<DWORD>(&dClimbingSpeed));		
+}
